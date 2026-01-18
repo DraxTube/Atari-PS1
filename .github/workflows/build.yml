@@ -10,27 +10,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container: 
-      image: spicyjpeg/psn00bsdk:latest # Immagine Docker con tutto pronto
+      image: spicyjpeg/psn00bsdk:latest
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4  # Aggiornato da v3 a v4
 
     - name: Compile Emulator
       run: |
-        # Compila il progetto
-        # Nota: L'immagine potrebbe richiedere setup specifici del makefile
-        # Qui usiamo un comando generico GCC per MIPS se il makefile fallisce
+        # Compila il codice C in ELF
         mipsel-none-elf-gcc -T$PSN00BSDK_LIBS/ldscripts/psx-exe.ld \
         -I$PSN00BSDK_LIBS/include -L$PSN00BSDK_LIBS/lib \
         main.c -o draxtube_atari.elf \
         -lpsn00b -lc
         
-        # Converti ELF in EXE (formato PS1)
+        # Converte ELF in EXE (Formato PS1)
         elf2exe draxtube_atari.elf draxtube_atari.exe
 
     - name: Upload PS1 Executable
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4  # Aggiornato da v3 a v4 (Fix dell'errore)
       with:
         name: DraxTube-Atari-PS1
         path: draxtube_atari.exe
+        compression-level: 0 # Opzionale, rende l'upload più veloce
