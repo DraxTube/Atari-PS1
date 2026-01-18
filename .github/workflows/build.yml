@@ -26,16 +26,14 @@ jobs:
         cp -r pcsx-redux/src/mips/common/syscalls/*.h sdk/include/ || true
         # Nota: Usiamo un approccio "bare metal" più semplice per l'emulatore
 
-    - name: Compile Emulator
+   - name: Compile Emulator
       run: |
-        # Compiliamo il main.c per architettura MIPS R3000
-        # -mabi=32: usa l'ABI standard 32 bit
-        # -march=r3000: target specifico della CPU PS1
-        mipsel-linux-gnu-gcc -march=r3000 -mabi=32 -O2 \
+        # Aggiungiamo -mfp32 e -msoft-float perché la PS1 non ha FPU
+        mipsel-linux-gnu-gcc -march=r3000 -mabi=32 -mfp32 -msoft-float -O2 \
         -ffreestanding -nostdlib -Ttext 0x80010000 \
         main.c -o draxtube_atari.elf -lgcc
         
-        # Convertiamo l'ELF in un binario puro
+        # Convertiamo l'ELF in un binario puro per la PS1
         mipsel-linux-gnu-objcopy -O binary draxtube_atari.elf draxtube_atari.exe
 
     - name: Upload PS1 Executable
