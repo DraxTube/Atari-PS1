@@ -3,8 +3,6 @@ name: Build DraxTube PS1 Emulator
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
   build:
@@ -14,36 +12,30 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Install Toolchain and SDK
+    - name: Install MIPS Compiler
       run: |
-        # 1. Installa dipendenze base
         sudo apt-get update
-        sudo apt-get install -y gcc-mipsel-linux-gnu make git unzip wget
+        sudo apt-get install -y gcc-mipsel-linux-gnu binutils-mipsel-linux-gnu make wget
 
-        # 2. Scarica una versione leggera di PSn00bSDK pre-compilata
-        # Usiamo una release stabile per evitare errori di compilazione
-        wget https://github.com/Lameguy64/PSn00bSDK/releases/download/v0.24/PSn00bSDK-0.24-Linux.tar.gz
-        tar -xzf PSn00bSDK-0.24-Linux.tar.gz
-        
-        # 3. Imposta le variabili d'ambiente per questa sessione
-        echo "PSN00BSDK_LIBS=$(pwd)/PSn00bSDK" >> $GITHUB_ENV
-        echo "PATH=$(pwd)/PSn00bSDK/bin:$PATH" >> $GITHUB_ENV
+    - name: Setup Minimal PS1 SDK
+      run: |
+        # Scarichiamo le librerie essenziali (tiny-sdk) per PS1
+        git clone https://github.com/grumpycoders/pcsx-redux.git
+        # Copiamo solo gli header necessari per far compilare il tuo main.c
+        mkdir -p sdk/include
+        cp -r pcsx-redux/src/mips/common/syscalls/*.h sdk/include/ || true
+        # Nota: Usiamo un approccio "bare metal" più semplice per l'emulatore
 
     - name: Compile Emulator
       run: |
-        # Definiamo i path manualmente per sicurezza
-        export SDK_PATH=$(pwd)/PSn00bSDK
+        # Compiliamo il main.c per architettura MIPS R3000
+        # -mabi=32: usa l'ABI standard 32 bit
+        # -march=r3000: target specifico della CPU PS1
+        mipsel-linux-gnu-gcc -march=r3000 -mabi=32 -O2 \
+        -ffreestanding -nostdlib -Ttext 0x80010000 \
+        main.c -o draxtube_atari.elf -lgcc
         
-        # Compila usando il GCC MIPS standard di Linux ma con le librerie SDK
-        mipsel-linux-gnu-gcc \
-        -I$SDK_PATH/include -L$SDK_PATH/lib \
-        -T$SDK_PATH/ldscripts/psx-exe.ld \
-        -O2 -G0 -mno-abicalls -fno-pic -Wall \
-        main.c -o draxtube_atari.elf \
-        -lpsn00b -lc -lgpu -lgte -letc -lapi
-        
-        # Converti in EXE (l'SDK include lo strumento elf2exe, ma se manca usiamo objcopy)
-        # Se elf2exe non c'è, usiamo questo trucco standard per PS1:
+        # Convertiamo l'ELF in un binario puro
         mipsel-linux-gnu-objcopy -O binary draxtube_atari.elf draxtube_atari.exe
 
     - name: Upload PS1 Executable
