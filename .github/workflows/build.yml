@@ -9,27 +9,45 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: 
-      image: spicyjpeg/psn00bsdk:latest
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4  # Aggiornato da v3 a v4
+      uses: actions/checkout@v4
+
+    - name: Install Toolchain and SDK
+      run: |
+        # 1. Installa dipendenze base
+        sudo apt-get update
+        sudo apt-get install -y gcc-mipsel-linux-gnu make git unzip wget
+
+        # 2. Scarica una versione leggera di PSn00bSDK pre-compilata
+        # Usiamo una release stabile per evitare errori di compilazione
+        wget https://github.com/Lameguy64/PSn00bSDK/releases/download/v0.24/PSn00bSDK-0.24-Linux.tar.gz
+        tar -xzf PSn00bSDK-0.24-Linux.tar.gz
+        
+        # 3. Imposta le variabili d'ambiente per questa sessione
+        echo "PSN00BSDK_LIBS=$(pwd)/PSn00bSDK" >> $GITHUB_ENV
+        echo "PATH=$(pwd)/PSn00bSDK/bin:$PATH" >> $GITHUB_ENV
 
     - name: Compile Emulator
       run: |
-        # Compila il codice C in ELF
-        mipsel-none-elf-gcc -T$PSN00BSDK_LIBS/ldscripts/psx-exe.ld \
-        -I$PSN00BSDK_LIBS/include -L$PSN00BSDK_LIBS/lib \
-        main.c -o draxtube_atari.elf \
-        -lpsn00b -lc
+        # Definiamo i path manualmente per sicurezza
+        export SDK_PATH=$(pwd)/PSn00bSDK
         
-        # Converte ELF in EXE (Formato PS1)
-        elf2exe draxtube_atari.elf draxtube_atari.exe
+        # Compila usando il GCC MIPS standard di Linux ma con le librerie SDK
+        mipsel-linux-gnu-gcc \
+        -I$SDK_PATH/include -L$SDK_PATH/lib \
+        -T$SDK_PATH/ldscripts/psx-exe.ld \
+        -O2 -G0 -mno-abicalls -fno-pic -Wall \
+        main.c -o draxtube_atari.elf \
+        -lpsn00b -lc -lgpu -lgte -letc -lapi
+        
+        # Converti in EXE (l'SDK include lo strumento elf2exe, ma se manca usiamo objcopy)
+        # Se elf2exe non c'è, usiamo questo trucco standard per PS1:
+        mipsel-linux-gnu-objcopy -O binary draxtube_atari.elf draxtube_atari.exe
 
     - name: Upload PS1 Executable
-      uses: actions/upload-artifact@v4  # Aggiornato da v3 a v4 (Fix dell'errore)
+      uses: actions/upload-artifact@v4
       with:
         name: DraxTube-Atari-PS1
         path: draxtube_atari.exe
-        compression-level: 0 # Opzionale, rende l'upload più veloce
