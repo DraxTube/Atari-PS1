@@ -1,62 +1,95 @@
 /*
- * Progetto: Atari 2600 Emulator for PS1
- * Sviluppatore: DraxTube
+ * ATARI 2600 EMULATOR FOR PS1
+ * Sviluppato per: DraxTube
  * GitHub: https://github.com/DraxTube
  * YouTube: https://www.youtube.com/@DraxTube01
  */
 
-#include <psxetc.h>
-#include <psxgpu.h>
-#include <psxpad.h>
-#include <stdint.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <libgte.h>
+#include <libgpu.h>
+#include <libetc.h>
 
-// Memoria Atari 2600
-uint8_t ram[128];
-uint8_t rom[4096]; // Carica qui la tua ROM
-uint16_t pc = 0xF000; // Entry point tipico
-uint8_t a, x, y, sp, status;
+// --- CONFIGURAZIONE SISTEMA ---
+DISPENV disp[2];
+DRAWENV draw[2];
+int db = 0; // Double buffer index
 
-// Funzione per eseguire un'istruzione 6502 (Esempio base)
-void step_6502() {
-    uint8_t opcode = rom[pc++ & 0xFFF];
-    switch(opcode) {
-        case 0xA9: // LDA Immediate
-            a = rom[pc++ & 0xFFF];
-            status = (a == 0) ? 0x02 : 0x00; // Update Zero Flag
-            break;
-        case 0x8D: // STA Absolute (Spesso usato per il TIA/Video)
-            uint16_t addr = rom[pc++];
-            addr |= (rom[pc++] << 8);
-            if (addr < 0x80) {
-                // Scrittura nei registri TIA (Rendering)
-                handle_tia_update(addr, a);
-            } else {
-                ram[addr & 0x7F] = a;
-            }
-            break;
-        // Aggiungi qui gli altri opcode...
-    }
+// --- EMULAZIONE ATARI 2600 ---
+// Memoria Atari: 128 byte RAM + 4KB ROM
+unsigned char ram[128];
+unsigned char rom[4096]; 
+unsigned short pc = 0xF000; // Program Counter
+unsigned char a = 0, x = 0, y = 0, sp = 0xFF; // Registri
+
+// Inizializza la grafica PS1 (320x240)
+void init_ps1_video() {
+    ResetGraph(0);
+    SetDefDispEnv(&disp[0], 0, 0, 320, 240);
+    SetDefDispEnv(&disp[1], 0, 240, 320, 240);
+    SetDefDrawEnv(&draw[0], 0, 240, 320, 240);
+    SetDefDrawEnv(&draw[1], 0, 0, 320, 240);
+    
+    draw[0].isbg = 1; draw[1].isbg = 1;
+    setRGB0(&draw[0], 0, 0, 0); // Sfondo nero
+    setRGB0(&draw[1], 0, 0, 0);
+    
+    PutDispEnv(&disp[0]);
+    PutDrawEnv(&draw[0]);
+    SetDispMask(1);
+    
+    // Carica Font di base
+    FntLoad(960, 256);
+    FntOpen(16, 16, 280, 200, 0, 512);
 }
 
-void handle_tia_update(uint16_t reg, uint8_t val) {
-    // Qui implementerai la logica "Racing the beam"
-    // Per ora, visualizziamo un colore di debug sulla PS1
+// Funzione per scambiare i buffer video
+void display() {
+    db = !db;
+    PutDispEnv(&disp[db]);
+    PutDrawEnv(&draw[db]);
+    // Attendi VSync (per non andare troppo veloce rispetto all'Atari)
+    VSync(0); 
+}
+
+// --- CORE CPU 6502 (Semplificato per demo) ---
+void cpu_step() {
+    // Simuliamo un'istruzione NOP per ora
+    pc++;
+}
+
+// --- RENDERER EMULATORE ---
+// Disegna lo stato dell'emulatore sulla PS1
+void render_emulator_screen() {
+    // Qui disegneremmo il framebuffer Atari.
+    // Per ora mostriamo i dati di debug e i crediti.
+    FntPrint("\n  ATARI 2600 EMULATOR - PS1\n");
+    FntPrint("  -------------------------\n");
+    FntPrint("  DEV: DraxTube\n");
+    FntPrint("  YT:  @DraxTube01\n");
+    FntPrint("  GITHUB: github.com/DraxTube\n\n");
+    
+    FntPrint("  CPU STATE:\n");
+    FntPrint("  PC: %04X  A: %02X  X: %02X\n", pc, a, x);
+    FntPrint("  STATUS: RUNNING\n");
+    
+    FntFlush(-1);
 }
 
 int main() {
-    // Inizializzazione Hardware PS1
-    PSX_Init();
-    InitHeap((unsigned long *)0x80010000, 0x10000);
-    
-    // Mostra crediti a video (Placeholder)
-    printf("DraxTube Atari Emulator loading...\n");
-    printf("GitHub: https://github.com/DraxTube\n");
+    init_ps1_video();
 
+    // Loop Principale
     while(1) {
-        step_6502(); // Esegue l'emulazione
+        // 1. Esegui istruzioni CPU Atari
+        cpu_step();
         
-        // Sincronizzazione video PS1
-        VSync(0);
+        // 2. Disegna la scena
+        render_emulator_screen();
+        
+        // 3. Aggiorna schermo
+        display();
     }
     return 0;
 }
