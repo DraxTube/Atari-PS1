@@ -1,19 +1,36 @@
-name: Build PS1 Atari Emulator
-on: [push]
+name: Build DraxTube PS1 Emulator
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: 
+      image: spicyjpeg/psn00bsdk:latest # Immagine Docker con tutto pronto
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Install Toolchain (Nugget/MIPS GCC)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-mips-linux-gnu build-essential cmake
-      - name: Build Project
-        run: make
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: PS1-Atari-Emulator
-          path: main.exe
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Compile Emulator
+      run: |
+        # Compila il progetto
+        # Nota: L'immagine potrebbe richiedere setup specifici del makefile
+        # Qui usiamo un comando generico GCC per MIPS se il makefile fallisce
+        mipsel-none-elf-gcc -T$PSN00BSDK_LIBS/ldscripts/psx-exe.ld \
+        -I$PSN00BSDK_LIBS/include -L$PSN00BSDK_LIBS/lib \
+        main.c -o draxtube_atari.elf \
+        -lpsn00b -lc
+        
+        # Converti ELF in EXE (formato PS1)
+        elf2exe draxtube_atari.elf draxtube_atari.exe
+
+    - name: Upload PS1 Executable
+      uses: actions/upload-artifact@v3
+      with:
+        name: DraxTube-Atari-PS1
+        path: draxtube_atari.exe
