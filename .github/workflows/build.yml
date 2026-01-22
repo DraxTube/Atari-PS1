@@ -13,13 +13,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          apk add --no-interactive cmake make
+          apk update
+          apk add --no-interactive cmake make build-base
 
       - name: Prepare Workspace
         run: |
-          # Se non hai messo un'icona, ne creiamo una finta per non far fallire il VPK
           mkdir -p sce_sys
-          touch sce_sys/icon0.png 
+          # Crea un'icona vuota se non esiste per permettere la creazione del VPK
+          if [ ! -f sce_sys/icon0.png ]; then
+            touch sce_sys/icon0.png
+          fi
           mkdir -p build
 
       - name: Build Project
@@ -27,7 +30,7 @@ jobs:
           cd build
           cmake .. -DCMAKE_TOOLCHAIN_FILE=${VITASDK}/share/vita.toolchain.cmake
           make
-
+          
       - name: Upload VPK
         uses: actions/upload-artifact@v4
         with:
