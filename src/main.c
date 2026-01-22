@@ -1,39 +1,48 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <vitasdk.h>
 
-/* Crediti richiesti */
-// Sviluppato da DraxTube
-// GitHub: https://github.com/DraxTube
-// YouTube: https://www.youtube.com/@DraxTube01
+/* * PROGRAMMA: IPTV Vita
+ * CREDITI: DraxTube 
+ * GitHub: https://github.com/DraxTube 
+ * YouTube: https://www.youtube.com/@DraxTube01 
+ */
 
 int main(int argc, char *argv[]) {
-    // Inizializza la grafica base per vedere qualcosa a schermo
+    // Caricamento moduli di rete
     sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
+    
+    // Inizializzazione schermo di debug
+    psvDebugScreenInit();
+    psvDebugScreenPrintf("========================================\n");
+    psvDebugScreenPrintf("          IPTV VITA - DRAXTUBE          \n");
+    psvDebugScreenPrintf("========================================\n");
+    psvDebugScreenPrintf("GitHub: github.com/DraxTube\n");
+    psvDebugScreenPrintf("YouTube: @DraxTube01\n\n");
     
     // Inizializzazione Rete
     SceNetInitParam netInitParam;
-    int size = 1 * 1024 * 1024; // 1MB di memoria per la rete
+    int size = 1 * 1024 * 1024; 
     netInitParam.memory = malloc(size);
     netInitParam.size = size;
     netInitParam.flags = 0;
-    sceNetInit(&netInitParam);
-    sceNetCtlInit();
+    
+    if (sceNetInit(&netInitParam) < 0) {
+        psvDebugScreenPrintf("Errore inizializzazione rete!\n");
+    } else {
+        sceNetCtlInit();
+        psvDebugScreenPrintf("Rete pronta. In attesa di caricare la lista...\n");
+    }
 
-    // Setup debug screen
-    psvDebugScreenInit();
-    psvDebugScreenPrintf("IPTV Vita by DraxTube\n");
-    psvDebugScreenPrintf("Canale YouTube: @DraxTube01\n");
-    psvDebugScreenPrintf("----------------------------\n");
-    psvDebugScreenPrintf("Caricamento lista canali...\n");
+    psvDebugScreenPrintf("\nPremi il tasto HOME per uscire.\n");
 
-    // QUI andrà la logica per leggere il file M3U che hai postato
-    // Per ora teniamo il loop infinito per non far crashare l'app
+    // Loop principale
     while (1) {
         sceKernelDelayThread(1000000);
     }
 
-    // Pulizia (teorica, non ci arriva mai per ora)
+    // Pulizia finale (mai raggiunta in questo loop)
     sceNetCtlTerm();
     sceNetTerm();
     free(netInitParam.memory);
