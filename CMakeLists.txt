@@ -1,25 +1,25 @@
 cmake_minimum_required(VERSION 3.10)
 
-# Imposta il VITASDK se non definito (per sicurezza)
+# Percorso SDK
 if(NOT DEFINED ENV{VITASDK})
-    message(FATAL_ERROR "VITASDK environment variable not set")
+    message(FATAL_ERROR "VITASDK non trovato. Controlla il workflow!")
 endif()
 set(VITASDK $ENV{VITASDK})
 
-# Carica i moduli Vita PRIMA del progetto
+# Forza l'inclusione dei moduli PS Vita
 list(APPEND CMAKE_MODULE_PATH "${VITASDK}/share/cmake/Modules")
-include("${VITASDK}/share/vita.cmake")
+include("${VITASDK}/share/vita.cmake" REQUIRED)
 
 project(IPTVVita)
 
-# Crediti DraxTube
+# Crediti DraxTube (GitHub: DraxTube | YT: @DraxTube01)
 set(VITA_APP_NAME "IPTV Vita DraxTube")
 set(VITA_TITLEID "DRAXT0001")
 
 # Sorgenti
 add_executable(IPTVVita src/main.c)
 
-# Librerie necessarie
+# Librerie necessarie per il networking e il video player
 target_link_libraries(IPTVVita 
     SceNet_stub 
     SceNetCtl_stub 
@@ -30,6 +30,7 @@ target_link_libraries(IPTVVita
     SceGxm_stub
     SceSysmodule_stub
     SceLibKernel_stub
+    SceAppUtil_stub
 )
 
 # Creazione VPK
