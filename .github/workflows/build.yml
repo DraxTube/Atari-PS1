@@ -19,12 +19,6 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          # Uso del toolchain specifico per PS Vita
+          # Passiamo il percorso corretto del toolchain
           cmake .. -DCMAKE_TOOLCHAIN_FILE=${VITASDK}/share/vita.toolchain.cmake
           make
-
-      - name: Upload VPK
-        uses: actions/upload-artifact@v4
-        with:
-          name: IPTV-Vita-DraxTube
-          path: build/*.vpk
