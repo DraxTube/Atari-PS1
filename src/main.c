@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <vitasdk.h>
+#include <debugnet.h>
 
 /* * PROGRAMMA: IPTV Vita
  * CREDITI: DraxTube 
@@ -32,17 +33,15 @@ int main(int argc, char *argv[]) {
         psvDebugScreenPrintf("Errore inizializzazione rete!\n");
     } else {
         sceNetCtlInit();
-        psvDebugScreenPrintf("Rete pronta. In attesa di caricare la lista...\n");
+        psvDebugScreenPrintf("Rete pronta. Build completata con successo!\n");
     }
 
     psvDebugScreenPrintf("\nPremi il tasto HOME per uscire.\n");
 
-    // Loop principale
     while (1) {
         sceKernelDelayThread(1000000);
     }
 
-    // Pulizia finale (mai raggiunta in questo loop)
     sceNetCtlTerm();
     sceNetTerm();
     free(netInitParam.memory);
