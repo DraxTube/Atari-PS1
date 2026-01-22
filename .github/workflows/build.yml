@@ -15,10 +15,21 @@ jobs:
         run: |
           apk add --no-interactive cmake make
 
+      - name: Prepare Workspace
+        run: |
+          # Se non hai messo un'icona, ne creiamo una finta per non far fallire il VPK
+          mkdir -p sce_sys
+          touch sce_sys/icon0.png 
+          mkdir -p build
+
       - name: Build Project
         run: |
-          mkdir -p build
           cd build
-          # Passiamo il percorso corretto del toolchain
           cmake .. -DCMAKE_TOOLCHAIN_FILE=${VITASDK}/share/vita.toolchain.cmake
           make
+
+      - name: Upload VPK
+        uses: actions/upload-artifact@v4
+        with:
+          name: IPTV-Vita-DraxTube
+          path: build/*.vpk
