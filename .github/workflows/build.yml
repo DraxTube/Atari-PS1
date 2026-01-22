@@ -1,31 +1,26 @@
-name: Build DraxTube PS1 Emulator
+name: Build PS Vita App
 
-on:
-  push:
-    branches: [ "main" ]
+on: [push, pull_request]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: vitasdk/vitasdk:latest # Usa l'immagine ufficiale vitasdk
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Install MIPS Compiler
+      - name: Build VPK
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-mipsel-linux-gnu binutils-mipsel-linux-gnu make wget
+          mkdir build
+          cd build
+          cmake ..
+          make
+          # Il comando 'make' genererà il file .vpk se il CMakeLists è corretto
 
-      - name: Compile Emulator
-        run: |
-          mipsel-linux-gnu-gcc -march=r3000 -mabi=32 -mfp32 -msoft-float -O2 \
-          -ffreestanding -nostdlib -Ttext 0x80010000 \
-          main.c -o draxtube_atari.elf -lgcc
-          
-          mipsel-linux-gnu-objcopy -O binary draxtube_atari.elf draxtube_atari.exe
-
-      - name: Upload PS1 Executable
-        uses: actions/upload-artifact@v4
+      - name: Upload VPK Artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: DraxTube-Atari-PS1
-          path: draxtube_atari.exe
+          name: IPTV-Vita-Build
+          path: build/*.vpk
