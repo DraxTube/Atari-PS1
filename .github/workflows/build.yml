@@ -1,26 +1,29 @@
-name: Build PS Vita App
+name: Build IPTV Vita (DraxTube)
 
 on: [push, pull_request]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: vitasdk/vitasdk:latest # Usa l'immagine ufficiale vitasdk
+    container: vitasdk/vitasdk:latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Aggiornato
 
-      - name: Build VPK
+      - name: Install dependencies
         run: |
-          mkdir build
+          apk add --no-interactive cmake make
+
+      - name: Build Project
+        run: |
+          mkdir -p build
           cd build
           cmake ..
           make
-          # Il comando 'make' genererà il file .vpk se il CMakeLists è corretto
 
-      - name: Upload VPK Artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload VPK
+        uses: actions/upload-artifact@v4 # Aggiornato alla v4
         with:
-          name: IPTV-Vita-Build
+          name: IPTV-Vita-DraxTube
           path: build/*.vpk
