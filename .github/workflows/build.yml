@@ -9,7 +9,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # Aggiornato
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -19,11 +19,12 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake ..
+          # Uso del toolchain specifico per PS Vita
+          cmake .. -DCMAKE_TOOLCHAIN_FILE=${VITASDK}/share/vita.toolchain.cmake
           make
 
       - name: Upload VPK
-        uses: actions/upload-artifact@v4 # Aggiornato alla v4
+        uses: actions/upload-artifact@v4
         with:
           name: IPTV-Vita-DraxTube
           path: build/*.vpk
